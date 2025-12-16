@@ -297,6 +297,9 @@
             playerId: null
         };
 
+        // Firebase 리스너 관리
+        let gameStatusListener = null;
+
         // 정답 좌표 (이미지 크기 1500x2000 기준)
         // answerpaint.png의 Target 마커 위치 기반
         const answerCoordinates = [
@@ -377,9 +380,19 @@
         function checkGameStatus() {
             if (!database) return;
             
-            database.ref('game/started').on('value', (snapshot) => {
+            // 기존 리스너가 있으면 제거 (중복 방지)
+            if (gameStatusListener) {
+                gameStatusListener.off();
+            }
+            
+            gameStatusListener = database.ref('game/started').on('value', (snapshot) => {
                 const started = snapshot.val();
                 if (started && !gameState.gameStarted && gameState.playerId) {
+                    // 게임 시작 시 리스너 제거
+                    if (gameStatusListener) {
+                        gameStatusListener.off();
+                        gameStatusListener = null;
+                    }
                     startGame();
                 }
             });
@@ -910,13 +923,18 @@
 
             // Firebase에 완료 정보 저장
             if (database && gameState.playerId) {
+                // 완료 정보 저장 후 등수 확인 (트랜잭션 대신 단순 업데이트 사용)
                 database.ref(`players/${gameState.playerId}`).update({
                     completed: true,
                     completionTime: completionTimestamp
-                });
-
-                // 등수 확인
-                database.ref('players').orderByChild('completionTime').once('value', (snapshot) => {
+                }).then(() => {
+                    // 등수 확인 (일단 완료 후 바로 등수 계산)
+                    // Firebase Realtime Database는 자동으로 동시성 처리
+                    return database.ref('players')
+                        .orderByChild('completionTime')
+                        .limitToFirst(100) // 최대 100명까지만 조회 (70명이면 충분)
+                        .once('value');
+                }).then((snapshot) => {
                     const players = snapshot.val() || {};
                     const completedPlayers = Object.values(players)
                         .filter(p => p.completed && p.completionTime)
@@ -927,7 +945,13 @@
                         p.name === gameState.name
                     ) + 1;
 
-                    showCompletionScreen(completionTime, rank);
+                    // 등수를 찾지 못한 경우 (거의 없지만 안전장치)
+                    const finalRank = rank > 0 ? rank : completedPlayers.length;
+                    showCompletionScreen(completionTime, finalRank);
+                }).catch((error) => {
+                    console.error('완료 처리 중 오류:', error);
+                    // 오류 발생 시에도 화면 표시 (등수는 1로 표시)
+                    showCompletionScreen(completionTime, 1);
                 });
             } else {
                 showCompletionScreen(completionTime, 1);
