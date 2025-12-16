@@ -438,8 +438,12 @@
                     return;
                 }
 
-                // 참가자 등록
-                database.ref(`players/${gameState.playerId}`).set({
+                // 참가자 등록 및 실시간 접속 상태 설정
+                const playerDataRef = database.ref(`players/${gameState.playerId}`);
+                const presenceRef = database.ref(`presence/${gameState.playerId}`);
+                
+                // 플레이어 데이터 저장
+                playerDataRef.set({
                     department: deptValue,
                     name: nameValue,
                     foundCount: 0,
@@ -448,15 +452,41 @@
                     joinedAt: Date.now()
                 }).then(() => {
                     console.log('Firebase 데이터 저장 성공');
+                    
+                    // 실시간 접속 상태 설정
+                    const connectedRef = database.ref('.info/connected');
+                    connectedRef.on('value', (snapshot) => {
+                        if (snapshot.val() === true) {
+                            // 연결되었을 때 presence 설정
+                            presenceRef.set({
+                                connected: true,
+                                department: deptValue,
+                                name: nameValue,
+                                timestamp: Date.now()
+                            });
+                            
+                            // 연결이 끊어지면 presence 자동 제거
+                            presenceRef.onDisconnect().remove();
+                        }
+                    });
+                    
                     // 게임 시작 상태 확인
                     return database.ref('game/started').once('value');
                 }).then((snapshot) => {
                     const started = snapshot.val();
                     if (started) {
+                        // 이미 게임이 시작된 상태면 바로 시작
                         startGame();
                     } else {
+                        // 아직 관리자가 게임을 시작하지 않은 상태 → 대기 모드
                         if (waitingMessage) waitingMessage.classList.remove('hidden');
                         if (enterBtn) enterBtn.disabled = true;
+
+                        // 안내 팝업 및 토스트
+                        showToast('게임 시작 대기 중입니다. 관리자가 시작하면 게임이 자동으로 시작됩니다.', 'info');
+                        alert('게임 시작 대기 중입니다.\n\n관리자가 게임을 시작하면\n자동으로 게임이 시작됩니다.');
+
+                        // 관리자 시작 여부를 실시간으로 감지
                         checkGameStatus();
                     }
                 }).catch((error) => {
@@ -514,10 +544,10 @@
 
         // 관리자 모드 설정
         function setupAdminMode() {
-            // 참가자 수 실시간 업데이트
-            database.ref('players').on('value', (snapshot) => {
-                const players = snapshot.val() || {};
-                const count = Object.keys(players).length;
+            // 참가자 수 실시간 업데이트 (실제 접속 중인 인원만 카운트)
+            database.ref('presence').on('value', (snapshot) => {
+                const presence = snapshot.val() || {};
+                const count = Object.keys(presence).length;
                 participantCount.textContent = `${count}명`;
             });
 
@@ -542,28 +572,28 @@
                 }
 
                 if (confirm('모든 참가자 데이터를 삭제하고 게임을 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
-                    // 모든 참가자 데이터 삭제
+                    // 모든 참가자 데이터 및 접속 상태 삭제
                     database.ref('players').remove()
                         .then(() => {
+                            // 접속 상태도 삭제
+                            return database.ref('presence').remove();
+                        })
+                        .then(() => {
                             // 게임 상태 초기화
-                            database.ref('game').set({
+                            return database.ref('game').set({
                                 started: false,
                                 startTime: null
-                            })
-                            .then(() => {
-                                showToast('데이터가 성공적으로 리셋되었습니다!', 'success');
-                                startGameBtn.disabled = false;
-                                participantCount.textContent = '0명';
-                                leaderboardBody.innerHTML = '';
-                            })
-                            .catch((error) => {
-                                console.error('게임 상태 초기화 실패:', error);
-                                showToast('게임 상태 초기화 중 오류가 발생했습니다.', 'error');
                             });
                         })
+                        .then(() => {
+                            showToast('데이터가 성공적으로 리셋되었습니다!', 'success');
+                            startGameBtn.disabled = false;
+                            participantCount.textContent = '0명';
+                            leaderboardBody.innerHTML = '';
+                        })
                         .catch((error) => {
-                            console.error('데이터 삭제 실패:', error);
-                            showToast('데이터 삭제 중 오류가 발생했습니다.', 'error');
+                            console.error('데이터 리셋 실패:', error);
+                            showToast('데이터 리셋 중 오류가 발생했습니다.', 'error');
                         });
                 }
             });
