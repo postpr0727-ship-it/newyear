@@ -295,12 +295,13 @@
         };
 
         // 정답 좌표 (이미지 크기 1500x2000 기준)
+        // answerpaint.png의 Target 마커 위치 기반
         const answerCoordinates = [
-            { id: 1, x: 1000, y: 450, tolerance: 80 }, // Green Monster
-            { id: 2, x: 300, y: 700, tolerance: 80 }, // Yellow Robot
-            { id: 3, x: 1300, y: 700, tolerance: 80 }, // Pink Dragon
-            { id: 4, x: 250, y: 1400, tolerance: 80 }, // Brown Ape
-            { id: 5, x: 1200, y: 1550, tolerance: 80 } // Yellow Blob
+            { id: 1, x: 1000, y: 450, tolerance: 120 }, // Target 1 - Green Monster (EeeeMO 근처)
+            { id: 2, x: 300, y: 700, tolerance: 120 }, // Target 2 - Yellow Robot (왼쪽 중간)
+            { id: 3, x: 1300, y: 700, tolerance: 120 }, // Target 3 - Pink Dragon (오른쪽)
+            { id: 4, x: 250, y: 1400, tolerance: 120 }, // Target 4 - Brown Ape (왼쪽 하단 건물)
+            { id: 5, x: 1200, y: 1550, tolerance: 120 } // Target 5 - Yellow Blob (오른쪽 하단)
         ];
 
         // DOM 요소
@@ -645,8 +646,9 @@
                 imageHeight = questionImage.offsetHeight;
                 
                 // 자연스러운 크기 기준으로 스케일 계산
-                scaleX = imageWidth / naturalWidth;
-                scaleY = imageHeight / naturalHeight;
+                // 클릭 좌표를 자연스러운 크기로 변환하기 위한 스케일
+                scaleX = naturalWidth / imageWidth;
+                scaleY = naturalHeight / imageHeight;
                 
                 console.log('이미지 크기 업데이트:', {
                     natural: `${naturalWidth}x${naturalHeight}`,
@@ -674,10 +676,11 @@
                 if (!gameState.gameStarted) return;
 
                 const rect = questionImage.getBoundingClientRect();
-                const x = (e.clientX - rect.left) / scaleX;
-                const y = (e.clientY - rect.top) / scaleY;
+                // 클릭한 화면 좌표를 자연스러운 이미지 크기로 변환
+                const clickX = (e.clientX - rect.left) * scaleX;
+                const clickY = (e.clientY - rect.top) * scaleY;
 
-                checkAnswer(x, y, e.clientX - rect.left, e.clientY - rect.top);
+                checkAnswer(clickX, clickY, e.clientX - rect.left, e.clientY - rect.top);
             });
 
             // 터치 시작
@@ -729,10 +732,11 @@
                     e.preventDefault();
                     
                     const rect = questionImage.getBoundingClientRect();
-                    const x = (touch.clientX - rect.left) / scaleX;
-                    const y = (touch.clientY - rect.top) / scaleY;
+                    // 터치한 화면 좌표를 자연스러운 이미지 크기로 변환
+                    const touchX = (touch.clientX - rect.left) * scaleX;
+                    const touchY = (touch.clientY - rect.top) * scaleY;
 
-                    checkAnswer(x, y, touch.clientX - rect.left, touch.clientY - rect.top);
+                    checkAnswer(touchX, touchY, touch.clientX - rect.left, touch.clientY - rect.top);
                 }
                 
                 // 리셋
@@ -744,11 +748,16 @@
         // 정답 확인
         function checkAnswer(x, y, displayX, displayY) {
             // x, y는 이미 자연스러운 크기 기준으로 변환된 좌표
-            // 실제 이미지 크기와 기준 크기(1500x2000)의 비율 계산
             const naturalWidth = questionImage.naturalWidth || 1500;
             const naturalHeight = questionImage.naturalHeight || 2000;
-            const widthRatio = naturalWidth / 1500;
-            const heightRatio = naturalHeight / 2000;
+            
+            // 디버깅: 클릭 좌표 출력 (콘솔에서 확인 가능)
+            console.log('클릭 좌표:', {
+                x: x.toFixed(2),
+                y: y.toFixed(2),
+                naturalSize: `${naturalWidth}x${naturalHeight}`,
+                displaySize: `${questionImage.offsetWidth}x${questionImage.offsetHeight}`
+            });
             
             // 이미 찾은 타겟인지 확인
             for (const answer of answerCoordinates) {
@@ -756,16 +765,15 @@
                     continue;
                 }
 
-                // 실제 이미지 크기에 맞게 정답 좌표 조정
-                const adjustedX = answer.x * widthRatio;
-                const adjustedY = answer.y * heightRatio;
-                const adjustedTolerance = answer.tolerance * Math.min(widthRatio, heightRatio);
-
+                // 자연스러운 크기 기준으로 정답 좌표 사용 (이미 변환된 x, y와 직접 비교)
                 const distance = Math.sqrt(
-                    Math.pow(x - adjustedX, 2) + Math.pow(y - adjustedY, 2)
+                    Math.pow(x - answer.x, 2) + Math.pow(y - answer.y, 2)
                 );
 
-                if (distance <= adjustedTolerance) {
+                // 디버깅: 각 타겟까지의 거리 출력
+                console.log(`타겟 ${answer.id}: 거리=${distance.toFixed(2)}, 허용범위=${answer.tolerance}`);
+
+                if (distance <= answer.tolerance) {
                     // 정답!
                     gameState.foundTargets.push(answer.id);
                     createMarker(displayX, displayY, true);
