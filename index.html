@@ -311,8 +311,9 @@
         };
 
         // Firebase 리스너 관리
+        // Firebase Realtime Database의 on/off 패턴을 올바르게 사용하기 위해
+        // 리스너 함수 자체를 저장해 둔다.
         let gameStatusListener = null;
-        let lastGameStartedStatus = false; // 이전 게임 시작 상태 저장
 
         // 정답 좌표 (이미지 크기 1500x2000 기준)
         // answerpaint.png의 Target 마커 위치 기반
@@ -391,73 +392,52 @@
         }
 
         // 게임 시작 상태 확인 (관리자가 게임 시작 버튼을 누를 때만 감지)
+        // 로직 단순화: game/started 값이 true가 되는 시점에만 게임 시작
         function checkGameStatus() {
             if (!database) return;
-            
+
+            const startedRef = database.ref('game/started');
+
             // 기존 리스너가 있으면 제거 (중복 방지)
             if (gameStatusListener) {
-                gameStatusListener.off();
+                startedRef.off('value', gameStatusListener);
+                gameStatusListener = null;
             }
-            
-            // 현재 상태를 먼저 확인하고 저장
-            database.ref('game/started').once('value').then((snapshot) => {
-                const currentStatus = snapshot.val() || false;
-                lastGameStartedStatus = currentStatus; // 현재 상태 저장
-                console.log('현재 게임 상태 확인:', currentStatus);
-                
-                // 실시간 리스너 등록 (관리자가 게임 시작 버튼을 누르면 감지)
-                gameStatusListener = database.ref('game/started').on('value', (snapshot) => {
-                    const started = snapshot.val() || false;
-                    
+
+            // 현재 상태를 한 번 확인하여, 이미 true 인 경우(늦게 입장한 참가자)는 바로 시작
+            startedRef.once('value').then((snapshot) => {
+                const started = !!snapshot.val();
+                console.log('현재 게임 상태 확인:', started);
+
+                if (started && !gameState.gameStarted && gameState.playerId) {
+                    console.log('이미 게임이 시작된 상태이므로 즉시 startGame() 호출');
+                    startGame();
+                    return;
+                }
+
+                // 아직 시작되지 않은 경우에만 리스너 등록
+                gameStatusListener = (snap) => {
+                    const val = !!snap.val();
                     console.log('게임 시작 상태 변경 감지:', {
-                        started: started,
-                        lastStatus: lastGameStartedStatus,
+                        started: val,
                         gameStarted: gameState.gameStarted,
                         playerId: gameState.playerId
                     });
-                    
-                    // 이전 상태와 비교하여 false에서 true로 변경된 경우만 게임 시작
-                    // (관리자가 버튼을 눌러서 변경된 경우)
-                    if (started === true && lastGameStartedStatus === false && !gameState.gameStarted && gameState.playerId) {
+
+                    // 관리자가 게임 시작 버튼을 눌러 game/started가 true가 된 경우
+                    if (val && !gameState.gameStarted && gameState.playerId) {
                         console.log('게임 시작 조건 만족 - startGame() 호출');
-                        lastGameStartedStatus = true; // 상태 업데이트
-                        
-                        // 게임 시작 시 리스너 제거
-                        if (gameStatusListener) {
-                            gameStatusListener.off();
-                            gameStatusListener = null;
-                        }
+                        startedRef.off('value', gameStatusListener);
+                        gameStatusListener = null;
                         startGame();
-                    } else {
-                        // 상태 업데이트 (다음 변경 감지를 위해)
-                        lastGameStartedStatus = started;
-                        console.log('게임 시작 조건 불만족:', {
-                            started: started,
-                            lastWasFalse: lastGameStartedStatus === false,
-                            gameStarted: gameState.gameStarted,
-                            hasPlayerId: !!gameState.playerId
-                        });
                     }
-                }, (error) => {
+                };
+
+                startedRef.on('value', gameStatusListener, (error) => {
                     console.error('게임 시작 상태 리스너 오류:', error);
                 });
             }).catch((error) => {
                 console.error('게임 상태 확인 실패:', error);
-                // 에러 발생 시 기본값 false로 시작
-                lastGameStartedStatus = false;
-                gameStatusListener = database.ref('game/started').on('value', (snapshot) => {
-                    const started = snapshot.val() || false;
-                    if (started === true && lastGameStartedStatus === false && !gameState.gameStarted && gameState.playerId) {
-                        lastGameStartedStatus = true;
-                        if (gameStatusListener) {
-                            gameStatusListener.off();
-                            gameStatusListener = null;
-                        }
-                        startGame();
-                    } else {
-                        lastGameStartedStatus = started;
-                    }
-                });
             });
         }
 
