@@ -380,13 +380,26 @@
         function checkGameStatus() {
             if (!database) return;
             
+            // 즉시 현재 상태 확인 (이미 시작된 경우 대비)
+            database.ref('game/started').once('value').then((snapshot) => {
+                const started = snapshot.val();
+                if (started && !gameState.gameStarted && gameState.playerId) {
+                    startGame();
+                    return;
+                }
+            }).catch((error) => {
+                console.error('게임 상태 확인 실패:', error);
+            });
+            
             // 기존 리스너가 있으면 제거 (중복 방지)
             if (gameStatusListener) {
                 gameStatusListener.off();
             }
             
+            // 실시간 리스너 등록
             gameStatusListener = database.ref('game/started').on('value', (snapshot) => {
                 const started = snapshot.val();
+                console.log('게임 시작 상태 변경:', started, 'gameStarted:', gameState.gameStarted, 'playerId:', gameState.playerId);
                 if (started && !gameState.gameStarted && gameState.playerId) {
                     // 게임 시작 시 리스너 제거
                     if (gameStatusListener) {
