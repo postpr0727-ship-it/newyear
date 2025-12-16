@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2026 김포다조은병원 신년회 이벤트</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes popIn {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        @keyframes slideDown {
+            0% {
+                transform: translateX(-50%) translateY(-100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .marker {
+            animation: popIn 0.3s ease-out;
+        }
+
+        .toast {
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .target-item.found img {
+            border-color: #10b981 !important;
+        }
+
+        body {
+            background-image: url('question/questionpaint.webp');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+        }
+
+        .entry-overlay {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.25);
+        }
+
+        .glass-button {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .glass-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 24px 0 rgba(31, 38, 135, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .glass-button:active {
+            transform: translateY(0);
+        }
+
+        .glass-input {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .glass-input:focus {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-3 md:p-5 font-sans overflow-x-hidden">
+    <!-- 입장 화면 -->
+    <div id="entryScreen" class="max-w-md mx-auto entry-overlay rounded-3xl p-4 md:p-6 shadow-2xl">
+        <div class="text-center mb-4">
+            <img src="logo/dajologo.png" alt="김포다조은병원 로고" class="max-w-[150px] md:max-w-[180px] h-auto mx-auto">
+        </div>
+        <h1 class="text-center text-gray-800 mb-2 text-xl md:text-2xl font-bold leading-tight">2026 김포다조은병원 신년회 이벤트</h1>
+        <h2 class="text-center text-blue-600 mb-3 text-lg md:text-xl font-semibold">"이것 봐 나를 한 번 찾아봐"</h2>
+        <p class="text-center text-gray-600 text-xs md:text-sm mb-4">© 2024 Kim Kyung-hoon. All rights reserved.</p>
+        
+        <div class="glass-card p-3 rounded-xl mb-4 text-xs md:text-sm text-gray-800 leading-relaxed">
+            <strong class="font-bold">설명:</strong> 시부야 스크램블에 숨은 5명의 타겟을 찾아내라는 병원장님의 명령이 떨어졌습니다. 여러분의 빠른 눈으로 타겟을 찾아보세요! 선착순으로 상품이 주어집니다.🔭
+        </div>
+
+        <div class="mb-3">
+            <label for="department" class="block mb-1.5 text-gray-800 font-bold text-xs md:text-sm">부서명</label>
+            <input type="text" id="department" placeholder="부서명을 입력하세요" required
+                class="w-full px-3 py-2.5 glass-input rounded-lg text-sm md:text-base focus:outline-none transition-all text-gray-800 placeholder-gray-600">
+        </div>
+
+        <div class="mb-3">
+            <label for="name" class="block mb-1.5 text-gray-800 font-bold text-xs md:text-sm">성명</label>
+            <input type="text" id="name" placeholder="이름을 입력하세요" required
+                class="w-full px-3 py-2.5 glass-input rounded-lg text-sm md:text-base focus:outline-none transition-all text-gray-800 placeholder-gray-600">
+        </div>
+
+        <button id="enterBtn" class="w-full py-3 glass-button text-white rounded-lg text-base md:text-lg font-bold mt-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0">
+            입장
+        </button>
+        <button id="adminBtn" class="w-full py-3 glass-button text-white rounded-lg text-base md:text-lg font-bold mt-2">
+            관리자 입장
+        </button>
+
+        <div id="waitingMessage" class="hidden text-center p-4 glass-card rounded-xl mt-4 text-blue-800 font-bold text-sm md:text-base">
+            게임 시작을 기다리고 있습니다...
+        </div>
+
+        <!-- 관리자 패널 -->
+        <div id="adminPanel" class="hidden glass-card p-4 rounded-xl mt-4">
+            <div class="mb-4">
+                <h3 class="text-gray-800 mb-2 text-base md:text-lg font-bold">참가 대기 인원</h3>
+                <div id="participantCount" class="text-xl md:text-2xl text-blue-600 font-bold">0명</div>
+            </div>
+            <button id="startGameBtn" class="w-full py-3 glass-button text-white rounded-lg text-base md:text-lg font-bold mt-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0">
+                게임 시작
+            </button>
+            <button id="resetGameBtn" class="w-full py-3 glass-button text-white rounded-lg text-base md:text-lg font-bold mt-2">
+                데이터 리셋
+            </button>
+            
+            <div class="mt-4">
+                <h3 class="mt-4 mb-3 text-base md:text-lg font-bold text-gray-800">게임 진행 상황</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse text-sm md:text-base">
+                        <thead>
+                            <tr>
+                                <th class="px-3 py-3 text-left bg-blue-600 text-white font-bold">부서명</th>
+                                <th class="px-3 py-3 text-left bg-blue-600 text-white font-bold">성명</th>
+                                <th class="px-3 py-3 text-left bg-blue-600 text-white font-bold">찾은 그림</th>
+                                <th class="px-3 py-3 text-left bg-blue-600 text-white font-bold">완료 시간</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboardBody" class="[&>tr:hover]:bg-gray-100">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 게임 화면 -->
+    <div id="gameScreen" class="hidden max-w-full mx-auto bg-white rounded-3xl p-6 md:p-8 shadow-2xl">
+        <div class="flex justify-between items-center mb-4 p-3 bg-gray-50 rounded-xl">
+            <div class="text-sm md:text-base text-gray-800" id="playerInfo"></div>
+            <div class="font-bold text-blue-600 text-lg md:text-xl">
+                찾은 그림: <span id="foundCount">0</span> / 5
+            </div>
+        </div>
+
+        <div id="targetsPreview" class="flex gap-3 overflow-x-auto py-3 mb-4">
+            <!-- 타겟 미리보기가 여기에 동적으로 추가됩니다 -->
+        </div>
+
+        <div class="relative w-full mb-4">
+            <img src="question/questionpaint.webp" alt="문제 그림" id="questionImage" 
+                class="w-full h-auto rounded-xl shadow-lg block touch-none">
+            <!-- 마커들이 여기에 동적으로 추가됩니다 -->
+        </div>
+
+        <button id="completeBtn" disabled class="w-full py-4 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg text-lg font-bold hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:hover:translate-y-0">
+            성공!
+        </button>
+    </div>
+
+    <!-- 완료 화면 -->
+    <div id="completionScreen" class="hidden max-w-full mx-auto bg-white rounded-3xl p-6 md:p-8 shadow-2xl text-center">
+        <div class="text-6xl md:text-7xl mb-5">🎉</div>
+        <div class="text-3xl md:text-4xl text-green-600 mb-5 font-bold">게임 완료!</div>
+        <div class="bg-gray-50 p-5 rounded-xl mb-5">
+            <div class="mb-3 text-lg md:text-xl">
+                <strong class="text-blue-600">부서명:</strong> <span id="completionDept"></span>
+            </div>
+            <div class="mb-3 text-lg md:text-xl">
+                <strong class="text-blue-600">성명:</strong> <span id="completionName"></span>
+            </div>
+            <div class="text-lg md:text-xl">
+                <strong class="text-blue-600">게임 시간:</strong> <span id="completionTime"></span>
+            </div>
+        </div>
+        <div id="rankBadge" class="inline-block bg-gradient-to-r from-blue-500 to-green-500 text-white px-8 py-3 rounded-full text-xl md:text-2xl font-bold my-5">
+            등수: 확인 중...
+        </div>
+    </div>
+
+    <!-- 관리자 비밀번호 모달 -->
+    <div id="adminModal" class="hidden fixed top-0 left-0 w-full h-full bg-black bg-opacity-70 z-[2000] items-center justify-center">
+        <div class="bg-white p-8 rounded-2xl max-w-[90%] max-h-[90%] overflow-y-auto">
+            <h2 class="mb-5 text-2xl font-bold text-gray-800">관리자 비밀번호</h2>
+            <input type="password" id="adminPassword" placeholder="비밀번호를 입력하세요"
+                class="w-full px-4 py-3 mb-4 border-2 border-gray-300 rounded-lg text-base focus:outline-none focus:border-blue-500 transition-colors">
+            <button id="adminLoginBtn" class="w-full py-4 bg-gradient-to-r from-blue-500 to-green-500 text-white rounded-lg text-lg font-bold hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
+                확인
+            </button>
+            <button id="adminCancelBtn" class="w-full py-4 bg-gray-500 text-white rounded-lg text-lg font-bold mt-3 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
+                취소
+            </button>
+        </div>
+    </div>
+
+    <!-- 토스트 메시지 -->
+    <div id="toast" class="hidden fixed top-5 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-4 rounded-lg z-[1000] font-bold"></div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <script>
+        // Firebase 설정 (사용자가 Firebase 프로젝트를 생성하고 설정값을 입력해야 합니다)
+        // Firebase Console (https://console.firebase.google.com)에서 프로젝트를 생성하고
+        // Realtime Database를 활성화한 후 아래 설정값을 입력하세요.
+        
+        const firebaseConfig = {
+            // Firebase 프로젝트 설정
+            apiKey: "AIzaSyAEqLtREV1qGz61R-Ny6hANB_Y9waeDqvw",
+            authDomain: "newyear-event.firebaseapp.com",
+            databaseURL: "https://newyear-event-default-rtdb.firebaseio.com",
+            projectId: "newyear-event",
+            storageBucket: "newyear-event.firebasestorage.app",
+            messagingSenderId: "188022742082",
+            appId: "1:188022742082:web:b87805729316c62d5121db"
+        };
+
+        // Firebase 초기화
+        let firebaseApp, database;
+        try {
+            firebaseApp = firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+        } catch (e) {
+            console.error("Firebase 초기화 실패:", e);
+            alert("Firebase 설정이 필요합니다. index.html 파일의 firebaseConfig를 설정해주세요.");
+        }
+
+        // 게임 상태
+        const gameState = {
+            isAdmin: false,
+            department: '',
+            name: '',
+            foundTargets: [],
+            startTime: null,
+            gameStarted: false,
+            playerId: null
+        };
+
+        // 정답 좌표 (이미지 크기 1500x2000 기준)
+        const answerCoordinates = [
+            { id: 1, x: 1000, y: 450, tolerance: 80 }, // Green Monster
+            { id: 2, x: 300, y: 700, tolerance: 80 }, // Yellow Robot
+            { id: 3, x: 1300, y: 700, tolerance: 80 }, // Pink Dragon
+            { id: 4, x: 250, y: 1400, tolerance: 80 }, // Brown Ape
+            { id: 5, x: 1200, y: 1550, tolerance: 80 } // Yellow Blob
+        ];
+
+        // DOM 요소
+        const entryScreen = document.getElementById('entryScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const completionScreen = document.getElementById('completionScreen');
+        const enterBtn = document.getElementById('enterBtn');
+        const adminBtn = document.getElementById('adminBtn');
+        const adminPanel = document.getElementById('adminPanel');
+        const waitingMessage = document.getElementById('waitingMessage');
+        const startGameBtn = document.getElementById('startGameBtn');
+        const resetGameBtn = document.getElementById('resetGameBtn');
+        const questionImage = document.getElementById('questionImage');
+        const foundCountEl = document.getElementById('foundCount');
+        const completeBtn = document.getElementById('completeBtn');
+        const targetsPreview = document.getElementById('targetsPreview');
+        const adminModal = document.getElementById('adminModal');
+        const adminPassword = document.getElementById('adminPassword');
+        const adminLoginBtn = document.getElementById('adminLoginBtn');
+        const adminCancelBtn = document.getElementById('adminCancelBtn');
+        const participantCount = document.getElementById('participantCount');
+        const leaderboardBody = document.getElementById('leaderboardBody');
+        const toast = document.getElementById('toast');
+
+        // 고유 ID 생성
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        // 토스트 메시지 표시
+        function showToast(message, type = 'success') {
+            toast.textContent = message;
+            toast.className = `fixed top-5 left-1/2 -translate-x-1/2 px-6 py-4 rounded-lg z-[1000] font-bold text-white toast`;
+            if (type === 'success') {
+                toast.classList.add('bg-green-500');
+            } else {
+                toast.classList.add('bg-blue-500');
+            }
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 2000);
+        }
+
+        // 타겟 미리보기 생성
+        function createTargetsPreview() {
+            targetsPreview.innerHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                const targetItem = document.createElement('div');
+                targetItem.className = 'min-w-[80px] text-center';
+                targetItem.id = `target-preview-${i}`;
+                targetItem.innerHTML = `
+                    <img src="target/target${i}.png" alt="타겟 ${i}" class="w-20 h-20 rounded-lg border-4 border-gray-300 object-contain">
+                    <div class="text-xs mt-1 text-gray-600">타겟 ${i}</div>
+                `;
+                targetsPreview.appendChild(targetItem);
+            }
+        }
+
+        // 게임 시작 상태 확인
+        function checkGameStatus() {
+            if (!database) return;
+            
+            database.ref('game/started').on('value', (snapshot) => {
+                const started = snapshot.val();
+                if (started && !gameState.gameStarted && gameState.playerId) {
+                    startGame();
+                }
+            });
+        }
+
+        // 입장 버튼 클릭
+        enterBtn.addEventListener('click', () => {
+            const department = document.getElementById('department').value.trim();
+            const name = document.getElementById('name').value.trim();
+
+            if (!department || !name) {
+                showToast('부서명과 이름을 입력해주세요.', 'error');
+                return;
+            }
+
+            gameState.department = department;
+            gameState.name = name;
+            gameState.playerId = generateId();
+
+            if (!database) {
+                showToast('Firebase 설정이 필요합니다.', 'error');
+                return;
+            }
+
+            // 참가자 등록
+            database.ref(`players/${gameState.playerId}`).set({
+                department: department,
+                name: name,
+                foundCount: 0,
+                completed: false,
+                completionTime: null,
+                joinedAt: Date.now()
+            });
+
+            // 게임 시작 상태 확인
+            database.ref('game/started').once('value', (snapshot) => {
+                const started = snapshot.val();
+                if (started) {
+                    startGame();
+                } else {
+                    waitingMessage.classList.remove('hidden');
+                    enterBtn.disabled = true;
+                    checkGameStatus();
+                }
+            });
+        });
+
+        // 관리자 입장 버튼
+        adminBtn.addEventListener('click', () => {
+            adminModal.classList.remove('hidden');
+            adminModal.classList.add('flex');
+            adminPassword.focus();
+        });
+
+        // 관리자 로그인
+        adminLoginBtn.addEventListener('click', () => {
+            if (adminPassword.value === '2024') {
+                gameState.isAdmin = true;
+                adminModal.classList.add('hidden');
+                adminModal.classList.remove('flex');
+                adminPanel.classList.remove('hidden');
+                adminPassword.value = '';
+                
+                if (!database) {
+                    showToast('Firebase 설정이 필요합니다.', 'error');
+                    return;
+                }
+
+                // 관리자 모드 초기화
+                setupAdminMode();
+            } else {
+                showToast('비밀번호가 올바르지 않습니다.', 'error');
+            }
+        });
+
+        adminCancelBtn.addEventListener('click', () => {
+            adminModal.classList.add('hidden');
+            adminModal.classList.remove('flex');
+            adminPassword.value = '';
+        });
+
+        // 관리자 모드 설정
+        function setupAdminMode() {
+            // 참가자 수 실시간 업데이트
+            database.ref('players').on('value', (snapshot) => {
+                const players = snapshot.val() || {};
+                const count = Object.keys(players).length;
+                participantCount.textContent = `${count}명`;
+            });
+
+            // 게임 시작 버튼
+            startGameBtn.addEventListener('click', () => {
+                if (!database) {
+                    showToast('Firebase 설정이 필요합니다.', 'error');
+                    return;
+                }
+
+                database.ref('game/started').set(true);
+                database.ref('game/startTime').set(Date.now());
+                showToast('게임이 시작되었습니다!', 'success');
+                startGameBtn.disabled = true;
+            });
+
+            // 데이터 리셋 버튼
+            resetGameBtn.addEventListener('click', () => {
+                if (!database) {
+                    showToast('Firebase 설정이 필요합니다.', 'error');
+                    return;
+                }
+
+                if (confirm('모든 참가자 데이터를 삭제하고 게임을 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
+                    // 모든 참가자 데이터 삭제
+                    database.ref('players').remove()
+                        .then(() => {
+                            // 게임 상태 초기화
+                            database.ref('game').set({
+                                started: false,
+                                startTime: null
+                            })
+                            .then(() => {
+                                showToast('데이터가 성공적으로 리셋되었습니다!', 'success');
+                                startGameBtn.disabled = false;
+                                participantCount.textContent = '0명';
+                                leaderboardBody.innerHTML = '';
+                            })
+                            .catch((error) => {
+                                console.error('게임 상태 초기화 실패:', error);
+                                showToast('게임 상태 초기화 중 오류가 발생했습니다.', 'error');
+                            });
+                        })
+                        .catch((error) => {
+                            console.error('데이터 삭제 실패:', error);
+                            showToast('데이터 삭제 중 오류가 발생했습니다.', 'error');
+                        });
+                }
+            });
+
+            // 리더보드 실시간 업데이트
+            database.ref('players').orderByChild('completionTime').on('value', (snapshot) => {
+                const players = snapshot.val() || {};
+                const sortedPlayers = Object.entries(players)
+                    .map(([id, data]) => ({ id, ...data }))
+                    .filter(p => p.completed)
+                    .sort((a, b) => {
+                        if (a.completionTime === null) return 1;
+                        if (b.completionTime === null) return -1;
+                        return a.completionTime - b.completionTime;
+                    });
+
+                leaderboardBody.innerHTML = '';
+                sortedPlayers.forEach((player, index) => {
+                    const row = document.createElement('tr');
+                    const time = player.completionTime ? 
+                        formatTime(player.completionTime - (player.gameStartTime || 0)) : '-';
+                    row.className = 'border-b border-gray-300';
+                    row.innerHTML = `
+                        <td class="px-3 py-3">${player.department}</td>
+                        <td class="px-3 py-3">${player.name}</td>
+                        <td class="px-3 py-3">${player.foundCount}/5</td>
+                        <td class="px-3 py-3">${time}</td>
+                    `;
+                    leaderboardBody.appendChild(row);
+                });
+            });
+        }
+
+        // 게임 시작
+        function startGame() {
+            if (!database) {
+                // Firebase 없이 로컬 테스트 모드
+                gameState.gameStarted = true;
+                entryScreen.classList.add('hidden');
+                gameScreen.classList.remove('hidden');
+                createTargetsPreview();
+                setupGame();
+                return;
+            }
+
+            gameState.gameStarted = true;
+            gameState.startTime = Date.now();
+
+            // 게임 시작 시간 저장
+            database.ref(`players/${gameState.playerId}/gameStartTime`).set(gameState.startTime);
+
+            entryScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            waitingMessage.classList.add('hidden');
+
+            document.getElementById('playerInfo').textContent = 
+                `${gameState.department} ${gameState.name}`;
+
+            createTargetsPreview();
+            setupGame();
+        }
+
+        // 게임 설정
+        function setupGame() {
+            const gameContainer = questionImage.parentElement;
+            let imageWidth = 0;
+            let imageHeight = 0;
+            let scaleX = 1;
+            let scaleY = 1;
+
+            questionImage.onload = () => {
+                imageWidth = questionImage.offsetWidth;
+                imageHeight = questionImage.offsetHeight;
+                scaleX = imageWidth / 1500; // 원본 이미지 너비
+                scaleY = imageHeight / 2000; // 원본 이미지 높이
+            };
+
+            questionImage.addEventListener('click', (e) => {
+                if (!gameState.gameStarted) return;
+
+                const rect = questionImage.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / scaleX;
+                const y = (e.clientY - rect.top) / scaleY;
+
+                checkAnswer(x, y, e.clientX - rect.left, e.clientY - rect.top);
+            });
+
+            // 터치 이벤트 지원
+            questionImage.addEventListener('touchend', (e) => {
+                if (!gameState.gameStarted) return;
+                e.preventDefault();
+
+                const rect = questionImage.getBoundingClientRect();
+                const touch = e.changedTouches[0];
+                const x = (touch.clientX - rect.left) / scaleX;
+                const y = (touch.clientY - rect.top) / scaleY;
+
+                checkAnswer(x, y, touch.clientX - rect.left, touch.clientY - rect.top);
+            });
+        }
+
+        // 정답 확인
+        function checkAnswer(x, y, displayX, displayY) {
+            // 이미 찾은 타겟인지 확인
+            for (const answer of answerCoordinates) {
+                if (gameState.foundTargets.includes(answer.id)) {
+                    continue;
+                }
+
+                const distance = Math.sqrt(
+                    Math.pow(x - answer.x, 2) + Math.pow(y - answer.y, 2)
+                );
+
+                if (distance <= answer.tolerance) {
+                    // 정답!
+                    gameState.foundTargets.push(answer.id);
+                    createMarker(displayX, displayY, true);
+                    updateFoundCount();
+                    updateTargetPreview(answer.id);
+                    showToast(`타겟 ${answer.id}를 찾았습니다!`, 'success');
+
+                    // Firebase에 업데이트
+                    if (database && gameState.playerId) {
+                        database.ref(`players/${gameState.playerId}/foundCount`).set(gameState.foundTargets.length);
+                    }
+
+                    // 모든 타겟을 찾았는지 확인
+                    if (gameState.foundTargets.length === 5) {
+                        completeBtn.disabled = false;
+                    }
+                    return;
+                }
+            }
+
+            // 오답
+            createMarker(displayX, displayY, false);
+            showToast('정답이 아닙니다. 다시 찾아보세요!', 'error');
+        }
+
+        // 마커 생성
+        function createMarker(x, y, isCorrect) {
+            const marker = document.createElement('div');
+            marker.className = `absolute w-10 h-10 rounded-full border-4 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10 marker`;
+            marker.style.left = x + 'px';
+            marker.style.top = y + 'px';
+            
+            if (isCorrect) {
+                marker.classList.add('border-green-500', 'bg-green-500', 'bg-opacity-20');
+            } else {
+                marker.classList.add('border-red-500', 'bg-red-500', 'bg-opacity-20');
+            }
+            
+            const gameContainer = questionImage.parentElement;
+            gameContainer.appendChild(marker);
+
+            if (!isCorrect) {
+                setTimeout(() => {
+                    marker.remove();
+                }, 1000);
+            }
+        }
+
+        // 찾은 개수 업데이트
+        function updateFoundCount() {
+            foundCountEl.textContent = gameState.foundTargets.length;
+        }
+
+        // 타겟 미리보기 업데이트
+        function updateTargetPreview(targetId) {
+            const preview = document.getElementById(`target-preview-${targetId}`);
+            if (preview) {
+                preview.classList.add('found');
+            }
+        }
+
+        // 시간 포맷
+        function formatTime(ms) {
+            const seconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes}분 ${secs}초`;
+        }
+
+        // 완료 버튼
+        completeBtn.addEventListener('click', () => {
+            if (gameState.foundTargets.length !== 5) return;
+
+            const completionTime = Date.now() - gameState.startTime;
+
+            // Firebase에 완료 정보 저장
+            if (database && gameState.playerId) {
+                database.ref(`players/${gameState.playerId}`).update({
+                    completed: true,
+                    completionTime: Date.now()
+                });
+
+                // 등수 확인
+                database.ref('players').orderByChild('completionTime').once('value', (snapshot) => {
+                    const players = snapshot.val() || {};
+                    const completedPlayers = Object.values(players)
+                        .filter(p => p.completed && p.completionTime)
+                        .sort((a, b) => a.completionTime - b.completionTime);
+                    
+                    const rank = completedPlayers.findIndex(p => 
+                        p.department === gameState.department && 
+                        p.name === gameState.name
+                    ) + 1;
+
+                    showCompletionScreen(completionTime, rank);
+                });
+            } else {
+                showCompletionScreen(completionTime, 1);
+            }
+        });
+
+        // 완료 화면 표시
+        function showCompletionScreen(completionTime, rank) {
+            gameScreen.classList.add('hidden');
+            completionScreen.classList.remove('hidden');
+
+            document.getElementById('completionDept').textContent = gameState.department;
+            document.getElementById('completionName').textContent = gameState.name;
+            document.getElementById('completionTime').textContent = formatTime(completionTime);
+            document.getElementById('rankBadge').textContent = `등수: ${rank}등`;
+        }
+
+        // 페이지 로드 시 이미지 크기 확인
+        window.addEventListener('load', () => {
+            if (questionImage.complete) {
+                const imageWidth = questionImage.offsetWidth;
+                const imageHeight = questionImage.offsetHeight;
+                console.log('이미지 크기:', imageWidth, 'x', imageHeight);
+            }
+        });
+    </script>
+</body>
+</html>
