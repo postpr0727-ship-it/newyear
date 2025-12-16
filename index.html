@@ -680,6 +680,58 @@
                 const clickX = (e.clientX - rect.left) * scaleX;
                 const clickY = (e.clientY - rect.top) * scaleY;
 
+                // Ctrl 키를 누른 상태에서 클릭하면 좌표만 표시 (디버깅 모드)
+                if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const gameContainer = questionImage.parentElement;
+                    const containerRect = gameContainer.getBoundingClientRect();
+                    const naturalWidth = questionImage.naturalWidth || 1500;
+                    const naturalHeight = questionImage.naturalHeight || 2000;
+                    
+                    // 좌표를 이미지 위에 표시 (컨테이너 기준으로 위치 계산)
+                    const coordDiv = document.createElement('div');
+                    coordDiv.style.position = 'absolute';
+                    coordDiv.style.left = (e.clientX - containerRect.left) + 'px';
+                    coordDiv.style.top = (e.clientY - containerRect.top) + 'px';
+                    coordDiv.style.transform = 'translate(-50%, -100%)';
+                    coordDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.9)';
+                    coordDiv.style.color = 'white';
+                    coordDiv.style.padding = '10px 15px';
+                    coordDiv.style.borderRadius = '8px';
+                    coordDiv.style.fontSize = '16px';
+                    coordDiv.style.fontWeight = 'bold';
+                    coordDiv.style.zIndex = '10000';
+                    coordDiv.style.pointerEvents = 'none';
+                    coordDiv.style.whiteSpace = 'nowrap';
+                    coordDiv.style.boxShadow = '0 4px 6px rgba(0,0,0,0.3)';
+                    coordDiv.textContent = `x: ${Math.round(clickX)}, y: ${Math.round(clickY)}`;
+                    
+                    gameContainer.appendChild(coordDiv);
+                    
+                    // 10초 후 제거
+                    setTimeout(() => {
+                        if (coordDiv.parentElement) {
+                            coordDiv.remove();
+                        }
+                    }, 10000);
+                    
+                    // 콘솔에도 출력 및 복사 가능한 형식 제공
+                    const currentScaleX = naturalWidth / questionImage.offsetWidth;
+                    const currentScaleY = naturalHeight / questionImage.offsetHeight;
+                    const coordText = `{ id: N, x: ${Math.round(clickX)}, y: ${Math.round(clickY)}, tolerance: 120 }`;
+                    console.log('=== 정답 좌표 (Ctrl+클릭) ===');
+                    console.log('자연 이미지 크기 기준 좌표:', { x: Math.round(clickX), y: Math.round(clickY) });
+                    console.log('자연 이미지 크기:', `${naturalWidth}x${naturalHeight}`);
+                    console.log('표시 이미지 크기:', `${questionImage.offsetWidth}x${questionImage.offsetHeight}`);
+                    console.log('스케일:', `X:${currentScaleX.toFixed(3)}, Y:${currentScaleY.toFixed(3)}`);
+                    console.log('코드에 추가할 형식:', coordText);
+                    console.log('================================');
+                    alert(`좌표: x=${Math.round(clickX)}, y=${Math.round(clickY)}\n\n이 좌표를 answerCoordinates 배열에 사용하세요.\n\n콘솔(F12)에서 자세한 정보를 확인할 수 있습니다.`);
+                    return;
+                }
+
                 checkAnswer(clickX, clickY, e.clientX - rect.left, e.clientY - rect.top);
             });
 
@@ -736,6 +788,8 @@
                     const touchX = (touch.clientX - rect.left) * scaleX;
                     const touchY = (touch.clientY - rect.top) * scaleY;
 
+                    // 두 손가락으로 터치하면 좌표만 표시 (디버깅 모드)
+                    // 단일 터치이므로 정상적인 게임 진행
                     checkAnswer(touchX, touchY, touch.clientX - rect.left, touch.clientY - rect.top);
                 }
                 
@@ -753,10 +807,11 @@
             
             // 디버깅: 클릭 좌표 출력 (콘솔에서 확인 가능)
             console.log('클릭 좌표:', {
-                x: x.toFixed(2),
-                y: y.toFixed(2),
+                x: Math.round(x),
+                y: Math.round(y),
                 naturalSize: `${naturalWidth}x${naturalHeight}`,
-                displaySize: `${questionImage.offsetWidth}x${questionImage.offsetHeight}`
+                displaySize: `${questionImage.offsetWidth}x${questionImage.offsetHeight}`,
+                '코드 형식': `{ id: N, x: ${Math.round(x)}, y: ${Math.round(y)}, tolerance: 120 }`
             });
             
             // 이미 찾은 타겟인지 확인
