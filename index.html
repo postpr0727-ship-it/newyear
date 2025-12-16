@@ -34,6 +34,23 @@
             animation: slideDown 0.3s ease-out;
         }
 
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-top-color: rgba(59, 130, 246, 1);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
         .target-item.found img {
             border-color: #10b981 !important;
         }
@@ -122,12 +139,8 @@
         </div>
 
         <button id="enterBtn" class="w-full py-2 glass-button text-blue-700 rounded-lg text-xs md:text-sm font-extrabold mt-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0" style="background: rgba(59, 130, 246, 0.15); backdrop-filter: blur(10px); border: 2px solid rgba(59, 130, 246, 0.4);">
-            입장
+            게임신청
         </button>
-
-        <div id="waitingMessage" class="hidden text-center p-2.5 glass-card rounded-lg mt-2.5 text-blue-800 font-bold text-xs md:text-sm">
-            게임 시작을 기다리고 있습니다...
-        </div>
 
         <!-- 관리자 패널 -->
         <div id="adminPanel" class="hidden glass-card p-2.5 rounded-lg mt-2.5">
@@ -481,13 +494,11 @@
                         }
                     });
                     
-                    // 항상 대기 모드로 진입 (관리자가 게임 시작 버튼을 눌러야만 시작)
-                    if (waitingMessage) waitingMessage.classList.remove('hidden');
-                    if (enterBtn) enterBtn.disabled = true;
-
-                    // 안내 팝업 및 토스트
-                    showToast('게임 시작 대기 중입니다. 관리자가 시작하면 게임이 자동으로 시작됩니다.', 'info');
-                    alert('게임 시작 대기 중입니다.\n\n관리자가 게임을 시작하면\n자동으로 게임이 시작됩니다.');
+                    // 버튼을 대기 상태로 변경 (로딩 효과 포함)
+                    if (enterBtn) {
+                        enterBtn.disabled = true;
+                        enterBtn.innerHTML = '<span class="loading-spinner"></span>게임 시작 대기중입니다';
+                    }
 
                     // 게임 시작 상태 확인 및 실시간 감지
                     return database.ref('game/started').once('value');
@@ -657,7 +668,6 @@
 
             entryScreen.classList.add('hidden');
             gameScreen.classList.remove('hidden');
-            waitingMessage.classList.add('hidden');
 
             // 게임 화면에서 핀치 줌 활성화
             const viewportMeta = document.getElementById('viewportMeta');
