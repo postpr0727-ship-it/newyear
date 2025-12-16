@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" id="viewportMeta" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>2026 김포다조은병원 신년회 이벤트</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -173,9 +173,9 @@
             <!-- 타겟 미리보기가 여기에 동적으로 추가됩니다 -->
         </div>
 
-        <div class="relative w-full mb-4 overflow-hidden">
+        <div class="relative w-full mb-4" style="overflow: auto; -webkit-overflow-scrolling: touch;">
             <img src="question/questionpaint.webp" alt="문제 그림" id="questionImage" 
-                class="w-full h-auto rounded-xl shadow-lg block" style="touch-action: pan-x pan-y pinch-zoom;">
+                class="rounded-xl shadow-lg block" style="touch-action: pan-x pan-y pinch-zoom; user-select: none; -webkit-user-drag: none; display: block; width: 100%; height: auto; max-width: none;">
             <!-- 마커들이 여기에 동적으로 추가됩니다 -->
         </div>
 
@@ -588,6 +588,13 @@
                 gameState.gameStarted = true;
                 entryScreen.classList.add('hidden');
                 gameScreen.classList.remove('hidden');
+                
+                // 게임 화면에서 핀치 줌 활성화
+                const viewportMeta = document.getElementById('viewportMeta');
+                if (viewportMeta) {
+                    viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
+                }
+                
                 createTargetsPreview();
                 setupGame();
                 return;
@@ -602,6 +609,12 @@
             entryScreen.classList.add('hidden');
             gameScreen.classList.remove('hidden');
             waitingMessage.classList.add('hidden');
+
+            // 게임 화면에서 핀치 줌 활성화
+            const viewportMeta = document.getElementById('viewportMeta');
+            if (viewportMeta) {
+                viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
+            }
 
             document.getElementById('playerInfo').textContent = 
                 `${gameState.department} ${gameState.name}`;
