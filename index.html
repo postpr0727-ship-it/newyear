@@ -445,9 +445,7 @@
                 if (!database) {
                     console.error('Firebase 데이터베이스가 초기화되지 않았습니다.');
                     showToast('Firebase 연결에 실패했습니다. 브라우저 콘솔을 확인해주세요.', 'error');
-                    // Firebase 없이 로컬 테스트 모드로 진행
-                    alert('Firebase 연결이 없어 로컬 테스트 모드로 진행합니다.');
-                    startGame();
+                    alert('Firebase 연결이 필요합니다. 관리자에게 문의하세요.');
                     return;
                 }
 
@@ -512,9 +510,9 @@
                         showToast('Firebase 권한 오류: 데이터베이스 보안 규칙을 확인해주세요.', 'error');
                         alert('Firebase 권한 오류가 발생했습니다.\n\nFirebase Console > Realtime Database > 규칙 탭에서 다음 규칙을 설정해주세요:\n\n{\n  "rules": {\n    ".read": true,\n    ".write": true\n  }\n}');
                     } else {
-                        showToast('Firebase 연결 오류가 발생했습니다. 로컬 모드로 진행합니다.', 'error');
+                        showToast('Firebase 연결 오류가 발생했습니다. 관리자에게 문의하세요.', 'error');
                     }
-                    startGame();
+                    // 에러 발생 시 게임 시작하지 않음 - 관리자가 시작해야 함
                 });
             });
         } else {
@@ -640,27 +638,16 @@
             });
         }
 
-        // 게임 시작
+        // 게임 시작 (반드시 관리자가 게임 시작 버튼을 눌러야만 호출됨)
         function startGame() {
-            // 게임 화면 배경 적용
-            document.body.classList.add('game-active');
-            
+            // Firebase가 없으면 게임 시작 불가
             if (!database) {
-                // Firebase 없이 로컬 테스트 모드
-                gameState.gameStarted = true;
-                entryScreen.classList.add('hidden');
-                gameScreen.classList.remove('hidden');
-                
-                // 게임 화면에서 핀치 줌 활성화
-                const viewportMeta = document.getElementById('viewportMeta');
-                if (viewportMeta) {
-                    viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
-                }
-                
-                createTargetsPreview();
-                setupGame();
+                showToast('Firebase 연결이 필요합니다. 관리자에게 문의하세요.', 'error');
                 return;
             }
+            
+            // 게임 화면 배경 적용
+            document.body.classList.add('game-active');
 
             gameState.gameStarted = true;
             gameState.startTime = Date.now();
