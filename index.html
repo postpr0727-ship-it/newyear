@@ -398,19 +398,35 @@
                 gameStatusListener.off();
             }
             
-            // 실시간 리스너만 등록 (관리자가 게임 시작 버튼을 누르면 감지)
+            // 실시간 리스너 등록 (관리자가 게임 시작 버튼을 누르면 감지)
             gameStatusListener = database.ref('game/started').on('value', (snapshot) => {
                 const started = snapshot.val();
-                console.log('게임 시작 상태 변경:', started, 'gameStarted:', gameState.gameStarted, 'playerId:', gameState.playerId);
-                // 관리자가 게임 시작 버튼을 눌러서 started가 true로 변경된 경우에만 게임 시작
-                if (started === true && !gameState.gameStarted && gameState.playerId) {
+                console.log('게임 시작 상태 변경 감지:', {
+                    started: started,
+                    gameStarted: gameState.gameStarted,
+                    playerId: gameState.playerId,
+                    startedType: typeof started
+                });
+                
+                // 관리자가 게임 시작 버튼을 눌러서 started가 true로 변경된 경우 게임 시작
+                // started는 boolean true이거나 truthy한 값일 수 있음
+                if (started && !gameState.gameStarted && gameState.playerId) {
+                    console.log('게임 시작 조건 만족 - startGame() 호출');
                     // 게임 시작 시 리스너 제거
                     if (gameStatusListener) {
                         gameStatusListener.off();
                         gameStatusListener = null;
                     }
                     startGame();
+                } else {
+                    console.log('게임 시작 조건 불만족:', {
+                        started: !!started,
+                        gameStarted: gameState.gameStarted,
+                        hasPlayerId: !!gameState.playerId
+                    });
                 }
+            }, (error) => {
+                console.error('게임 시작 상태 리스너 오류:', error);
             });
         }
 
@@ -490,8 +506,22 @@
                         enterBtn.innerHTML = '<span class="loading-spinner"></span>게임 시작 대기중입니다';
                     }
 
-                    // 관리자가 게임을 시작할 때까지 대기 (실시간 감지만 사용)
-                    checkGameStatus();
+                    // 관리자가 게임을 시작할 때까지 대기 (실시간 감지 사용)
+                    // 게임 시작 상태를 확인하고 리스너 등록
+                    database.ref('game/started').once('value').then((snapshot) => {
+                        const started = snapshot.val();
+                        // 이미 게임이 시작된 경우 즉시 시작
+                        if (started === true && !gameState.gameStarted) {
+                            startGame();
+                        } else {
+                            // 아직 시작되지 않은 경우 리스너 등록
+                            checkGameStatus();
+                        }
+                    }).catch((error) => {
+                        console.error('게임 상태 확인 실패:', error);
+                        // 에러 발생 시에도 리스너 등록 시도
+                        checkGameStatus();
+                    });
                 }).catch((error) => {
                     console.error('Firebase 오류:', error);
                     console.error('오류 코드:', error.code);
