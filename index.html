@@ -46,10 +46,15 @@
             background-repeat: no-repeat;
         }
 
+        body.game-active {
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #000000 100%);
+            background-attachment: fixed;
+        }
+
         .entry-overlay {
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.25);
         }
 
@@ -92,64 +97,61 @@
 </head>
 <body class="min-h-screen p-3 md:p-5 font-sans overflow-x-hidden">
     <!-- 입장 화면 -->
-    <div id="entryScreen" class="max-w-md mx-auto entry-overlay rounded-3xl p-4 md:p-6 shadow-2xl">
-        <div class="text-center mb-4">
-            <img src="logo/dajologo.png" alt="김포다조은병원 로고" class="max-w-[150px] md:max-w-[180px] h-auto mx-auto">
+    <div id="entryScreen" class="max-w-md mx-auto entry-overlay rounded-2xl p-2.5 md:p-3.5 shadow-2xl">
+        <div class="text-center mb-2.5">
+            <img src="logo/dajologo.png" alt="김포다조은병원 로고" class="max-w-[90px] md:max-w-[108px] h-auto mx-auto">
         </div>
-        <h1 class="text-center text-gray-800 mb-2 text-xl md:text-2xl font-bold leading-tight">2026 김포다조은병원 신년회 이벤트</h1>
-        <h2 class="text-center text-blue-600 mb-3 text-lg md:text-xl font-semibold">"이것 봐 나를 한 번 찾아봐"</h2>
-        <p class="text-center text-gray-600 text-xs md:text-sm mb-4">© 2024 Kim Kyung-hoon. All rights reserved.</p>
+        <h1 class="text-center text-gray-700 mb-1.5 text-xs md:text-sm font-semibold leading-tight">2026 김포다조은병원 신년회</h1>
+        <h2 class="text-center mb-2.5 text-base md:text-lg font-bold leading-tight" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">"이것 봐 나를 한 번 찾아봐"</h2>
+        <p class="text-center text-gray-600 text-[10px] md:text-xs mb-2.5">© 2024 Kim Kyung-hoon. All rights reserved.</p>
         
-        <div class="glass-card p-3 rounded-xl mb-4 text-xs md:text-sm text-gray-800 leading-relaxed">
+        <div class="glass-card p-2 rounded-lg mb-2.5 text-[10px] md:text-xs text-gray-800 leading-relaxed">
             <strong class="font-bold">설명:</strong> 시부야 스크램블에 숨은 5명의 타겟을 찾아내라는 병원장님의 명령이 떨어졌습니다. 여러분의 빠른 눈으로 타겟을 찾아보세요! 선착순으로 상품이 주어집니다.🔭
         </div>
 
-        <div class="mb-2.5">
-            <label for="department" class="block mb-1 text-gray-800 font-bold text-xs md:text-sm">부서명</label>
+        <div class="mb-2">
+            <label for="department" class="block mb-0.5 text-gray-800 font-bold text-[10px] md:text-xs">부서명</label>
             <input type="text" id="department" placeholder="부서명을 입력하세요" required
-                class="w-full px-2.5 py-1.5 glass-input rounded-lg text-xs md:text-sm focus:outline-none transition-all text-gray-800 placeholder-gray-600">
+                class="w-full px-2 py-1 glass-input rounded-lg text-[10px] md:text-xs focus:outline-none transition-all text-gray-800 placeholder-gray-600">
         </div>
 
-        <div class="mb-2.5">
-            <label for="name" class="block mb-1 text-gray-800 font-bold text-xs md:text-sm">성명</label>
+        <div class="mb-2">
+            <label for="name" class="block mb-0.5 text-gray-800 font-bold text-[10px] md:text-xs">성명</label>
             <input type="text" id="name" placeholder="이름을 입력하세요" required
-                class="w-full px-2.5 py-1.5 glass-input rounded-lg text-xs md:text-sm focus:outline-none transition-all text-gray-800 placeholder-gray-600">
+                class="w-full px-2 py-1 glass-input rounded-lg text-[10px] md:text-xs focus:outline-none transition-all text-gray-800 placeholder-gray-600">
         </div>
 
-        <button id="enterBtn" class="w-full py-3 glass-button text-white rounded-lg text-base md:text-lg font-bold mt-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0">
+        <button id="enterBtn" class="w-full py-2 glass-button text-blue-700 rounded-lg text-xs md:text-sm font-extrabold mt-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0" style="background: rgba(59, 130, 246, 0.15); backdrop-filter: blur(10px); border: 2px solid rgba(59, 130, 246, 0.4);">
             입장
         </button>
-        <button id="adminBtn" class="w-full py-3 glass-button text-white rounded-lg text-base md:text-lg font-bold mt-2">
-            관리자 입장
-        </button>
 
-        <div id="waitingMessage" class="hidden text-center p-4 glass-card rounded-xl mt-4 text-blue-800 font-bold text-sm md:text-base">
+        <div id="waitingMessage" class="hidden text-center p-2.5 glass-card rounded-lg mt-2.5 text-blue-800 font-bold text-xs md:text-sm">
             게임 시작을 기다리고 있습니다...
         </div>
 
         <!-- 관리자 패널 -->
-        <div id="adminPanel" class="hidden glass-card p-4 rounded-xl mt-4">
-            <div class="mb-4">
-                <h3 class="text-gray-800 mb-2 text-base md:text-lg font-bold">참가 대기 인원</h3>
-                <div id="participantCount" class="text-xl md:text-2xl text-blue-600 font-bold">0명</div>
+        <div id="adminPanel" class="hidden glass-card p-2.5 rounded-lg mt-2.5">
+            <div class="mb-2.5">
+                <h3 class="text-gray-800 mb-1.5 text-xs md:text-sm font-bold">참가 대기 인원</h3>
+                <div id="participantCount" class="text-sm md:text-base text-blue-600 font-bold">0명</div>
             </div>
-            <button id="startGameBtn" class="w-full py-3 glass-button text-white rounded-lg text-base md:text-lg font-bold mt-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0">
+            <button id="startGameBtn" class="w-full py-2 glass-button text-white rounded-lg text-xs md:text-sm font-bold mt-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0">
                 게임 시작
             </button>
-            <button id="resetGameBtn" class="w-full py-3 glass-button text-white rounded-lg text-base md:text-lg font-bold mt-2">
+            <button id="resetGameBtn" class="w-full py-2 glass-button text-white rounded-lg text-xs md:text-sm font-bold mt-1.5">
                 데이터 리셋
             </button>
             
-            <div class="mt-4">
-                <h3 class="mt-4 mb-3 text-base md:text-lg font-bold text-gray-800">게임 진행 상황</h3>
+            <div class="mt-2.5">
+                <h3 class="mt-2.5 mb-2 text-xs md:text-sm font-bold text-gray-800">게임 진행 상황</h3>
                 <div class="overflow-x-auto">
-                    <table class="w-full border-collapse text-sm md:text-base">
+                    <table class="w-full border-collapse text-[10px] md:text-xs">
                         <thead>
                             <tr>
-                                <th class="px-3 py-3 text-left bg-blue-600 text-white font-bold">부서명</th>
-                                <th class="px-3 py-3 text-left bg-blue-600 text-white font-bold">성명</th>
-                                <th class="px-3 py-3 text-left bg-blue-600 text-white font-bold">찾은 그림</th>
-                                <th class="px-3 py-3 text-left bg-blue-600 text-white font-bold">완료 시간</th>
+                                <th class="px-2 py-2 text-left bg-blue-600 text-white font-bold">부서명</th>
+                                <th class="px-2 py-2 text-left bg-blue-600 text-white font-bold">성명</th>
+                                <th class="px-2 py-2 text-left bg-blue-600 text-white font-bold">찾은 그림</th>
+                                <th class="px-2 py-2 text-left bg-blue-600 text-white font-bold">완료 시간</th>
                             </tr>
                         </thead>
                         <tbody id="leaderboardBody" class="[&>tr:hover]:bg-gray-100">
@@ -159,13 +161,18 @@
             </div>
         </div>
     </div>
+    
+    <!-- 관리자 입장 텍스트 (화면 하단) -->
+    <div class="text-center mt-2">
+        <span id="adminBtn" class="text-gray-400 text-[10px] cursor-pointer hover:text-gray-600 transition-colors">관리자 입장</span>
+    </div>
 
     <!-- 게임 화면 -->
-    <div id="gameScreen" class="hidden max-w-full mx-auto bg-white rounded-3xl p-6 md:p-8 shadow-2xl overflow-hidden">
-        <div class="flex justify-between items-center mb-4 p-3 bg-gray-50 rounded-xl">
-            <div class="text-sm md:text-base text-gray-800" id="playerInfo"></div>
-            <div class="font-bold text-blue-600 text-lg md:text-xl">
-                찾은 그림: <span id="foundCount">0</span> / 5
+    <div id="gameScreen" class="hidden max-w-full mx-auto p-6 md:p-8 overflow-hidden" style="background: rgba(20, 20, 30, 0.7); backdrop-filter: blur(20px); border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);">
+        <div class="flex justify-between items-center mb-4 p-3 rounded-xl" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.1);">
+            <div class="text-sm md:text-base text-gray-200" id="playerInfo"></div>
+            <div class="font-bold text-blue-400 text-lg md:text-xl">
+                찾은 그림: <span id="foundCount" class="text-blue-300">0</span> / 5
             </div>
         </div>
 
@@ -175,13 +182,9 @@
 
         <div class="relative w-full mb-4" style="overflow: auto; -webkit-overflow-scrolling: touch;">
             <img src="question/questionpaint.webp" alt="문제 그림" id="questionImage" 
-                class="rounded-xl shadow-lg block" style="touch-action: pan-x pan-y pinch-zoom; user-select: none; -webkit-user-drag: none; display: block; width: 100%; height: auto; max-width: none;">
+                class="rounded-xl block" style="touch-action: pan-x pan-y pinch-zoom; user-select: none; -webkit-user-drag: none; display: block; width: 100%; height: auto; max-width: none; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);">
             <!-- 마커들이 여기에 동적으로 추가됩니다 -->
         </div>
-
-        <button id="completeBtn" disabled class="w-full py-4 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg text-lg font-bold hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:hover:translate-y-0">
-            성공!
-        </button>
     </div>
 
     <!-- 완료 화면 -->
@@ -316,7 +319,6 @@
         const resetGameBtn = document.getElementById('resetGameBtn');
         const questionImage = document.getElementById('questionImage');
         const foundCountEl = document.getElementById('foundCount');
-        const completeBtn = document.getElementById('completeBtn');
         const targetsPreview = document.getElementById('targetsPreview');
         const adminModal = document.getElementById('adminModal');
         const adminPassword = document.getElementById('adminPassword');
@@ -365,7 +367,7 @@
                 targetItem.id = `target-preview-${i}`;
                 targetItem.innerHTML = `
                     <img src="target/target${i}.png" alt="타겟 ${i}" class="w-20 h-20 rounded-lg border-4 border-gray-300 object-contain">
-                    <div class="text-xs mt-1 text-gray-600">타겟 ${i}</div>
+                    <div class="text-xs mt-1 text-gray-300">타겟 ${i}</div>
                 `;
                 targetsPreview.appendChild(targetItem);
             }
@@ -584,6 +586,9 @@
 
         // 게임 시작
         function startGame() {
+            // 게임 화면 배경 적용
+            document.body.classList.add('game-active');
+            
             if (!database) {
                 // Firebase 없이 로컬 테스트 모드
                 gameState.gameStarted = true;
@@ -841,9 +846,9 @@
                         database.ref(`players/${gameState.playerId}/foundCount`).set(gameState.foundTargets.length);
                     }
 
-                    // 모든 타겟을 찾았는지 확인
+                    // 모든 타겟을 찾았는지 확인 (5개를 모두 찾으면 자동으로 완료)
                     if (gameState.foundTargets.length === 5) {
-                        completeBtn.disabled = false;
+                        handleGameCompletion();
                     }
                     return;
                 }
@@ -898,17 +903,16 @@
             return `${minutes}분 ${secs}초`;
         }
 
-        // 완료 버튼
-        completeBtn.addEventListener('click', () => {
-            if (gameState.foundTargets.length !== 5) return;
-
-            const completionTime = Date.now() - gameState.startTime;
+        // 게임 완료 처리 함수
+        function handleGameCompletion() {
+            const completionTimestamp = Date.now(); // 마지막 정답 클릭 시점
+            const completionTime = completionTimestamp - gameState.startTime;
 
             // Firebase에 완료 정보 저장
             if (database && gameState.playerId) {
                 database.ref(`players/${gameState.playerId}`).update({
                     completed: true,
-                    completionTime: Date.now()
+                    completionTime: completionTimestamp
                 });
 
                 // 등수 확인
@@ -928,10 +932,14 @@
             } else {
                 showCompletionScreen(completionTime, 1);
             }
-        });
+        }
+
 
         // 완료 화면 표시
         function showCompletionScreen(completionTime, rank) {
+            // 게임 화면 배경 제거
+            document.body.classList.remove('game-active');
+            
             gameScreen.classList.add('hidden');
             completionScreen.classList.remove('hidden');
 
