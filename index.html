@@ -161,7 +161,7 @@
     </div>
 
     <!-- 게임 화면 -->
-    <div id="gameScreen" class="hidden max-w-full mx-auto bg-white rounded-3xl p-6 md:p-8 shadow-2xl">
+    <div id="gameScreen" class="hidden max-w-full mx-auto bg-white rounded-3xl p-6 md:p-8 shadow-2xl overflow-hidden">
         <div class="flex justify-between items-center mb-4 p-3 bg-gray-50 rounded-xl">
             <div class="text-sm md:text-base text-gray-800" id="playerInfo"></div>
             <div class="font-bold text-blue-600 text-lg md:text-xl">
@@ -173,9 +173,9 @@
             <!-- 타겟 미리보기가 여기에 동적으로 추가됩니다 -->
         </div>
 
-        <div class="relative w-full mb-4">
+        <div class="relative w-full mb-4 overflow-hidden">
             <img src="question/questionpaint.webp" alt="문제 그림" id="questionImage" 
-                class="w-full h-auto rounded-xl shadow-lg block touch-none">
+                class="w-full h-auto rounded-xl shadow-lg block" style="touch-action: pan-x pan-y pinch-zoom;">
             <!-- 마커들이 여기에 동적으로 추가됩니다 -->
         </div>
 
@@ -617,14 +617,46 @@
             let imageHeight = 0;
             let scaleX = 1;
             let scaleY = 1;
+            let touchStartTime = 0;
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let hasMoved = false;
 
-            questionImage.onload = () => {
+            // 이미지 크기 업데이트 함수
+            function updateImageScale() {
+                // 실제 표시된 이미지의 자연스러운 크기 사용
+                const naturalWidth = questionImage.naturalWidth || 1500;
+                const naturalHeight = questionImage.naturalHeight || 2000;
+                
                 imageWidth = questionImage.offsetWidth;
                 imageHeight = questionImage.offsetHeight;
-                scaleX = imageWidth / 1500; // 원본 이미지 너비
-                scaleY = imageHeight / 2000; // 원본 이미지 높이
+                
+                // 자연스러운 크기 기준으로 스케일 계산
+                scaleX = imageWidth / naturalWidth;
+                scaleY = imageHeight / naturalHeight;
+                
+                console.log('이미지 크기 업데이트:', {
+                    natural: `${naturalWidth}x${naturalHeight}`,
+                    display: `${imageWidth}x${imageHeight}`,
+                    scale: `X:${scaleX.toFixed(3)}, Y:${scaleY.toFixed(3)}`
+                });
+            }
+
+            questionImage.onload = () => {
+                updateImageScale();
             };
 
+            // 이미지가 이미 로드된 경우
+            if (questionImage.complete) {
+                updateImageScale();
+            }
+
+            // 리사이즈 시 스케일 재계산
+            window.addEventListener('resize', () => {
+                updateImageScale();
+            });
+
+            // 클릭 이벤트 (데스크톱)
             questionImage.addEventListener('click', (e) => {
                 if (!gameState.gameStarted) return;
 
@@ -635,33 +667,92 @@
                 checkAnswer(x, y, e.clientX - rect.left, e.clientY - rect.top);
             });
 
-            // 터치 이벤트 지원
+            // 터치 시작
+            questionImage.addEventListener('touchstart', (e) => {
+                if (!gameState.gameStarted) return;
+                if (e.touches.length > 1) {
+                    // 핀치 제스처 (확대/축소) 중일 때는 무시
+                    hasMoved = true;
+                    return;
+                }
+                
+                touchStartTime = Date.now();
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                hasMoved = false;
+            }, { passive: true });
+
+            // 터치 이동
+            questionImage.addEventListener('touchmove', (e) => {
+                if (!gameState.gameStarted) return;
+                if (e.touches.length > 1) {
+                    // 핀치 제스처 중
+                    hasMoved = true;
+                    return;
+                }
+                
+                if (touchStartTime > 0) {
+                    const touch = e.touches[0];
+                    const moveX = Math.abs(touch.clientX - touchStartX);
+                    const moveY = Math.abs(touch.clientY - touchStartY);
+                    
+                    // 10픽셀 이상 이동하면 이동으로 간주
+                    if (moveX > 10 || moveY > 10) {
+                        hasMoved = true;
+                    }
+                }
+            }, { passive: true });
+
+            // 터치 종료
             questionImage.addEventListener('touchend', (e) => {
                 if (!gameState.gameStarted) return;
-                e.preventDefault();
-
-                const rect = questionImage.getBoundingClientRect();
+                if (e.changedTouches.length > 1) return; // 멀티터치 무시
+                
+                const touchDuration = Date.now() - touchStartTime;
                 const touch = e.changedTouches[0];
-                const x = (touch.clientX - rect.left) / scaleX;
-                const y = (touch.clientY - rect.top) / scaleY;
+                
+                // 이동이 없고, 터치 시간이 짧으면(300ms 이하) 클릭으로 간주
+                if (!hasMoved && touchDuration < 300) {
+                    e.preventDefault();
+                    
+                    const rect = questionImage.getBoundingClientRect();
+                    const x = (touch.clientX - rect.left) / scaleX;
+                    const y = (touch.clientY - rect.top) / scaleY;
 
-                checkAnswer(x, y, touch.clientX - rect.left, touch.clientY - rect.top);
+                    checkAnswer(x, y, touch.clientX - rect.left, touch.clientY - rect.top);
+                }
+                
+                // 리셋
+                touchStartTime = 0;
+                hasMoved = false;
             });
         }
 
         // 정답 확인
         function checkAnswer(x, y, displayX, displayY) {
+            // x, y는 이미 자연스러운 크기 기준으로 변환된 좌표
+            // 실제 이미지 크기와 기준 크기(1500x2000)의 비율 계산
+            const naturalWidth = questionImage.naturalWidth || 1500;
+            const naturalHeight = questionImage.naturalHeight || 2000;
+            const widthRatio = naturalWidth / 1500;
+            const heightRatio = naturalHeight / 2000;
+            
             // 이미 찾은 타겟인지 확인
             for (const answer of answerCoordinates) {
                 if (gameState.foundTargets.includes(answer.id)) {
                     continue;
                 }
 
+                // 실제 이미지 크기에 맞게 정답 좌표 조정
+                const adjustedX = answer.x * widthRatio;
+                const adjustedY = answer.y * heightRatio;
+                const adjustedTolerance = answer.tolerance * Math.min(widthRatio, heightRatio);
+
                 const distance = Math.sqrt(
-                    Math.pow(x - answer.x, 2) + Math.pow(y - answer.y, 2)
+                    Math.pow(x - adjustedX, 2) + Math.pow(y - adjustedY, 2)
                 );
 
-                if (distance <= answer.tolerance) {
+                if (distance <= adjustedTolerance) {
                     // 정답!
                     gameState.foundTargets.push(answer.id);
                     createMarker(displayX, displayY, true);
