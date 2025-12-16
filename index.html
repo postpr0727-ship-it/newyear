@@ -481,23 +481,23 @@
                         }
                     });
                     
-                    // 게임 시작 상태 확인
+                    // 항상 대기 모드로 진입 (관리자가 게임 시작 버튼을 눌러야만 시작)
+                    if (waitingMessage) waitingMessage.classList.remove('hidden');
+                    if (enterBtn) enterBtn.disabled = true;
+
+                    // 안내 팝업 및 토스트
+                    showToast('게임 시작 대기 중입니다. 관리자가 시작하면 게임이 자동으로 시작됩니다.', 'info');
+                    alert('게임 시작 대기 중입니다.\n\n관리자가 게임을 시작하면\n자동으로 게임이 시작됩니다.');
+
+                    // 게임 시작 상태 확인 및 실시간 감지
                     return database.ref('game/started').once('value');
                 }).then((snapshot) => {
                     const started = snapshot.val();
-                    if (started) {
-                        // 이미 게임이 시작된 상태면 바로 시작
+                    // 이미 게임이 시작된 상태라면 바로 시작 (늦게 참가한 경우)
+                    if (started && !gameState.gameStarted) {
                         startGame();
                     } else {
-                        // 아직 관리자가 게임을 시작하지 않은 상태 → 대기 모드
-                        if (waitingMessage) waitingMessage.classList.remove('hidden');
-                        if (enterBtn) enterBtn.disabled = true;
-
-                        // 안내 팝업 및 토스트
-                        showToast('게임 시작 대기 중입니다. 관리자가 시작하면 게임이 자동으로 시작됩니다.', 'info');
-                        alert('게임 시작 대기 중입니다.\n\n관리자가 게임을 시작하면\n자동으로 게임이 시작됩니다.');
-
-                        // 관리자 시작 여부를 실시간으로 감지
+                        // 아직 시작되지 않았거나 이미 시작된 경우, 실시간 감지 리스너 등록
                         checkGameStatus();
                     }
                 }).catch((error) => {
