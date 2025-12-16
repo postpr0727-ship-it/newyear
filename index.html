@@ -244,19 +244,43 @@
 
         // Firebase 초기화
         let firebaseApp, database;
-        try {
-            if (typeof firebase !== 'undefined') {
-                firebaseApp = firebase.initializeApp(firebaseConfig);
-                database = firebase.database();
-                console.log('Firebase 초기화 성공');
-            } else {
-                console.error('Firebase SDK가 로드되지 않았습니다.');
+        
+        // Firebase SDK 로드를 기다린 후 초기화
+        function initializeFirebase() {
+            try {
+                if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length === 0) {
+                    firebaseApp = firebase.initializeApp(firebaseConfig);
+                    database = firebase.database();
+                    console.log('Firebase 초기화 성공');
+                    return true;
+                } else if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0) {
+                    // 이미 초기화된 경우
+                    firebaseApp = firebase.app();
+                    database = firebase.database();
+                    console.log('Firebase 이미 초기화됨');
+                    return true;
+                } else {
+                    console.error('Firebase SDK가 로드되지 않았습니다.');
+                    database = null;
+                    return false;
+                }
+            } catch (e) {
+                console.error("Firebase 초기화 실패:", e);
                 database = null;
+                return false;
             }
-        } catch (e) {
-            console.error("Firebase 초기화 실패:", e);
-            database = null;
-            // 초기화 실패해도 게임은 진행 가능하도록 함 (로컬 모드)
+        }
+        
+        // 즉시 초기화 시도
+        if (!initializeFirebase()) {
+            // SDK 로드를 기다림
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    if (!database) {
+                        initializeFirebase();
+                    }
+                }, 500);
+            });
         }
 
         // 게임 상태
@@ -406,14 +430,11 @@
                     completed: false,
                     completionTime: null,
                     joinedAt: Date.now()
-                }).catch((error) => {
-                    console.error('Firebase 데이터 저장 실패:', error);
-                    showToast('데이터 저장에 실패했습니다. 로컬 모드로 진행합니다.', 'error');
-                    startGame();
-                });
-
-                // 게임 시작 상태 확인
-                database.ref('game/started').once('value', (snapshot) => {
+                }).then(() => {
+                    console.log('Firebase 데이터 저장 성공');
+                    // 게임 시작 상태 확인
+                    return database.ref('game/started').once('value');
+                }).then((snapshot) => {
                     const started = snapshot.val();
                     if (started) {
                         startGame();
@@ -423,8 +444,17 @@
                         checkGameStatus();
                     }
                 }).catch((error) => {
-                    console.error('Firebase 데이터 읽기 실패:', error);
-                    showToast('게임 상태 확인 실패. 로컬 모드로 진행합니다.', 'error');
+                    console.error('Firebase 오류:', error);
+                    console.error('오류 코드:', error.code);
+                    console.error('오류 메시지:', error.message);
+                    
+                    // 권한 오류인 경우
+                    if (error.code === 'PERMISSION_DENIED') {
+                        showToast('Firebase 권한 오류: 데이터베이스 보안 규칙을 확인해주세요.', 'error');
+                        alert('Firebase 권한 오류가 발생했습니다.\n\nFirebase Console > Realtime Database > 규칙 탭에서 다음 규칙을 설정해주세요:\n\n{\n  "rules": {\n    ".read": true,\n    ".write": true\n  }\n}');
+                    } else {
+                        showToast('Firebase 연결 오류가 발생했습니다. 로컬 모드로 진행합니다.', 'error');
+                    }
                     startGame();
                 });
             });
